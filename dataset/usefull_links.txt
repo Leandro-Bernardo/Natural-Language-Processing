@@ -1,0 +1,7 @@
+Climate changes (classification task):
+task: https://propaganda.math.unipd.it/semeval2025task10/
+dataset: https://github.com/jpiskorski/CC-denial-resources/tree/main
+
+Subjectivity:
+task: https://checkthat.gitlab.io/clef2025/task1/
+dataset: https://gitlab.com/checkthat_lab/clef2025-checkthat-lab/-/tree/main/task1/data/english
