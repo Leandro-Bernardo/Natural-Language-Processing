@@ -5,12 +5,14 @@ import pandas as pd
 from sentence_transformers import SentenceTransformer
 from torch import FloatTensor, UntypedStorage
 from tqdm import tqdm
+import json
 
 
 MODEL = 'sentence-transformers/all-MiniLM-L6-v2'
 DATASETS_PATH = os.path.join(".", "dataset", "processed_datasets")
 EMBEDDINGS_SAVE_PATH = os.path.join(".", "dataset", "embeddings")
 os.makedirs(EMBEDDINGS_SAVE_PATH, exist_ok=True)
+os.makedirs(os.path.join(EMBEDDINGS_SAVE_PATH, "metadata"), exist_ok=True)
 
 # loads the tokenizer and the model
 model = SentenceTransformer(MODEL)
@@ -78,10 +80,29 @@ def extract_embeddings(train_dataset, val_dataset, test_dataset, dataset_id):
         test_dataset[i] = test_dataset[i]
         test_labels[i] = test_labels[i]
 
+    # writes metadata
+    with open(os.path.join(os.path.join(EMBEDDINGS_SAVE_PATH, "metadata"), f"metadata_train_{dataset_id}.json"), "w") as file:
+        json.dump({
+            "total_sentences": train_size[0],
+            "embedding_size": train_size[1],
+        }, file)
+    with open(os.path.join(os.path.join(EMBEDDINGS_SAVE_PATH, "metadata"), f"metadata_val_{dataset_id}.json"), "w") as file:
+        json.dump({
+            "total_sentences": val_size[0],
+            "embedding_size": val_size[1],
+        }, file)
+    with open(os.path.join(os.path.join(EMBEDDINGS_SAVE_PATH, "metadata"), f"metadata_test_{dataset_id}.json"), "w") as file:
+        json.dump({
+            "total_sentences": test_size[0],
+            "embedding_size": test_size[1],
+        }, file)
+
+
+
 
 if __name__ == "__main__":
     extract_embeddings(train_dataset_1, val_dataset_1, test_dataset_1, 1)
     extract_embeddings(train_dataset_2, val_dataset_2, test_dataset_2, 2)
-    print(" ")
+
 
 
