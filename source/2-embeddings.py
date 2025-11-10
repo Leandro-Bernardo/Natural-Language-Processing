@@ -62,23 +62,23 @@ def extract_embeddings(train_dataset, val_dataset, test_dataset, dataset_id):
     test_labels_shape = test_labels.shape
 
     # creat untyped storage object for save the descriptors
-    train_dataset = FloatTensor(torch.from_file(os.path.join(EMBEDDINGS_SAVE_PATH, f"embeddings_train_{dataset_id}.bin"), shared = True, size= (train_size[0]*train_size[1]))).view(train_size[0], train_size[1])
-    train_labels = FloatTensor(torch.from_file(os.path.join(EMBEDDINGS_SAVE_PATH, f"labels_train_{dataset_id}.bin"), shared = True, size= (train_labels_shape[0]*train_labels_shape[1]))).view(train_labels_shape[0], train_labels_shape[1])
-    val_dataset = FloatTensor(torch.from_file(os.path.join(EMBEDDINGS_SAVE_PATH, f"embeddings_val_{dataset_id}.bin"), shared = True, size= (val_size[0]*val_size[1]))).view(val_size[0], val_size[1])
-    val_labels = FloatTensor(torch.from_file(os.path.join(EMBEDDINGS_SAVE_PATH, f"labels_val_{dataset_id}.bin"), shared = True, size= (val_labels_shape[0]*val_labels_shape[1]))).view(val_labels_shape[0], val_labels_shape[1])
-    test_dataset = FloatTensor(torch.from_file(os.path.join(EMBEDDINGS_SAVE_PATH, f"embeddings_test_{dataset_id}.bin"), shared = True, size= (test_size[0]*test_size[1]))).view(test_size[0], test_size[1])
-    test_labels = FloatTensor(torch.from_file(os.path.join(EMBEDDINGS_SAVE_PATH, f"labels_test_{dataset_id}.bin"), shared = True, size= (test_labels_shape[0]*test_labels_shape[1]))).view(test_labels_shape[0], test_labels_shape[1])
+    train_dataset_storage = FloatTensor(torch.from_file(os.path.join(EMBEDDINGS_SAVE_PATH, f"embeddings_train_{dataset_id}.bin"), shared = True, size= (train_size[0]*train_size[1]))).view(train_size[0], train_size[1])
+    train_labels_storage = FloatTensor(torch.from_file(os.path.join(EMBEDDINGS_SAVE_PATH, f"labels_train_{dataset_id}.bin"), shared = True, size= (train_labels_shape[0]*train_labels_shape[1]))).view(train_labels_shape[0], train_labels_shape[1])
+    val_dataset_storage = FloatTensor(torch.from_file(os.path.join(EMBEDDINGS_SAVE_PATH, f"embeddings_val_{dataset_id}.bin"), shared = True, size= (val_size[0]*val_size[1]))).view(val_size[0], val_size[1])
+    val_labels_storage = FloatTensor(torch.from_file(os.path.join(EMBEDDINGS_SAVE_PATH, f"labels_val_{dataset_id}.bin"), shared = True, size= (val_labels_shape[0]*val_labels_shape[1]))).view(val_labels_shape[0], val_labels_shape[1])
+    test_dataset_storage = FloatTensor(torch.from_file(os.path.join(EMBEDDINGS_SAVE_PATH, f"embeddings_test_{dataset_id}.bin"), shared = True, size= (test_size[0]*test_size[1]))).view(test_size[0], test_size[1])
+    test_labels_storage = FloatTensor(torch.from_file(os.path.join(EMBEDDINGS_SAVE_PATH, f"labels_test_{dataset_id}.bin"), shared = True, size= (test_labels_shape[0]*test_labels_shape[1]))).view(test_labels_shape[0], test_labels_shape[1])
 
     # writes the embeddings on the created untyped storage object
-    for i in tqdm(range(0, len(train_dataset)), desc="saving train embeddings"):
-        train_dataset[i] = train_dataset[i]
-        train_labels[i] = train_labels[i]
+    for i in tqdm(range(0, len(train_embeddings)), desc="saving train embeddings"):
+        train_dataset_storage[i,:] = train_embeddings[i,:]
+        train_labels_storage[i,:] = train_labels[i,:]
     for i in tqdm(range(0, len(val_dataset)), desc="saving val embeddings"):
-        val_dataset[i] = val_dataset[i]
-        val_labels[i] = val_labels[i]
+        val_dataset_storage[i,:] = val_embeddings[i,:]
+        val_labels_storage[i,:] = val_labels[i,:]
     for i in tqdm(range(0, len(test_dataset)), desc="saving test embeddings"):
-        test_dataset[i] = test_dataset[i]
-        test_labels[i] = test_labels[i]
+        test_dataset_storage[i,:] = test_embeddings[i,:]
+        test_labels_storage[i,:] = test_labels[i,:]
 
     # writes metadata
     with open(os.path.join(os.path.join(EMBEDDINGS_SAVE_PATH, "metadata"), f"metadata_train_{dataset_id}.json"), "w") as file:
