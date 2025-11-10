@@ -3,3 +3,5 @@ datasets/
 checkpoints/
 lightning_logs/
 wandb/
+source/models/__pycache__
+/source/debug.py
