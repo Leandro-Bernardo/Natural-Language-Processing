@@ -1,5 +1,5 @@
 sweep_id: "hsp8fq7w"
 task: "subj_classifier"
-nn_model: "subj_classifier"
+nn_model: "subj_classifier_2"
 max_epochs: 1000
 learning_rate_patience: 10

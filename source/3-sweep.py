@@ -35,7 +35,8 @@ with open(os.path.join(os.path.dirname(__file__), "settings.yaml"), "r") as file
 with open(os.path.join(os.path.dirname(__file__),'sweep_config.yaml')) as file:
     SWEEP_CONFIGS = yaml.load(file, Loader=yaml.FullLoader)
 
-networks_choices = {"subj_classifier": {"subj_classifier": subj.subj_classifier},
+networks_choices = {"subj_classifier": {"subj_classifier": subj.subj_classifier,
+                                        "subj_classifier_2": subj.subj_classifier_2},
                       "cc_classifier": {}}
 MODEL_NETWORK = networks_choices[MODEL_TASK][MODEL_VERSION]
 
@@ -68,13 +69,13 @@ def main():
         # train the model
         trainer = Trainer(
                         logger= logger,
-                        accelerator="gpu",
+                        accelerator="cpu",
                         max_epochs=MAX_EPOCHS,
                         callbacks= [checkpoint_callback,
                                     LearningRateMonitor(logging_interval='epoch'),
                                     EarlyStopping(
-                                                monitor="Loss/Val",
-                                                mode="min",
+                                                monitor="acc/Val/Epoch",
+                                                mode="max",
                                                 patience= LR_PATIENCE
                                             ),],
                         gradient_clip_val= 0.5,
