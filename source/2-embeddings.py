@@ -9,8 +9,8 @@ import json
 
 
 MODEL = 'sentence-transformers/all-MiniLM-L6-v2'
-DATASETS_PATH = os.path.join(".", "dataset", "processed_datasets")
-EMBEDDINGS_SAVE_PATH = os.path.join(".", "dataset", "embeddings")
+DATASETS_PATH = os.path.join(os.path.dirname(__file__), "..", "dataset", "processed_datasets")
+EMBEDDINGS_SAVE_PATH = os.path.join(os.path.dirname(__file__), "..", "dataset", "embeddings")
 os.makedirs(EMBEDDINGS_SAVE_PATH, exist_ok=True)
 os.makedirs(os.path.join(EMBEDDINGS_SAVE_PATH, "metadata"), exist_ok=True)
 
