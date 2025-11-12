@@ -74,7 +74,7 @@ def main():
         pos_weight_tensor = torch.tensor(pos_weight_value, dtype=torch.float32)
         loss_choices = {"binary_cross_entropy":torch.nn.BCEWithLogitsLoss(pos_weight=pos_weight_tensor) if TRAIN_WITH_WEIGHTS else torch.nn.BCEWithLogitsLoss()}
         # load data module
-        data_module = DataModule(datasets_root=EMBEDDINGS_PATH, batch_size= configs["batch_size"], dataset_id=dataset_id[MODEL_TASK], num_workers=6, train_with_weights=TRAIN_WITH_WEIGHTS, majority_class_weight=0.5)
+        data_module = DataModule(datasets_root=EMBEDDINGS_PATH, batch_size= configs["batch_size"], dataset_id=dataset_id[MODEL_TASK], num_workers=6)
         model = BaseModel(model=MODEL_NETWORK, loss_function=loss_choices[configs["loss_function"]], batch_size=configs["batch_size"], learning_rate=configs["lr"], learning_rate_patience=LR_PATIENCE, dataset_id=dataset_id[MODEL_TASK])
         # train the model
         trainer = Trainer(

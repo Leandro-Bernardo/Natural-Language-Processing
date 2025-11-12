@@ -34,7 +34,6 @@ class DataModule(LightningDataModule):
         labels = FloatTensor(torch.from_file(os.path.join(datasets_root, f"labels_{stage}_{dataset_id}.bin"), shared = False, size= (total_sentences))).view(total_sentences)
         return TensorDataset(embeddings, labels)
 
-
     def setup(self, stage: str) -> None:
         if stage == "fit":
             self.train_subset = self._load_dataset(self.datasets_root, self.dataset_id, "train")
