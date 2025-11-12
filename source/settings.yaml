@@ -1,5 +1,12 @@
-sweep_id: "hsp8fq7w"
+#training stage
+sweep_id: ""
 task: "subj_classifier"
-nn_model: "subj_classifier_2"
+nn_model: "subj_classifier"
 max_epochs: 1000
 learning_rate_patience: 10
+train_with_weights: true
+
+#evaluation stage
+chosen_model: ""
+dataset_to_evaluate: 1
+dataset_stage: ""

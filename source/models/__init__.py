@@ -1,2 +1,3 @@
 from .lightning import *
-from .subj import subj_classifier
+from .subj import *
+from .classn import *

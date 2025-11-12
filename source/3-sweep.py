@@ -29,6 +29,7 @@ with open(os.path.join(os.path.dirname(__file__), "settings.yaml"), "r") as file
     # training hyperparams
     MAX_EPOCHS = settings["max_epochs"]
     LR_PATIENCE = settings["learning_rate_patience"]
+    TRAIN_WITH_WEIGHTS = settings["train_with_weights"]
     #GRADIENT_CLIPPING = settings["gradient_clipping"]
 
 # reads sweep configs yaml
@@ -40,7 +41,6 @@ networks_choices = {"subj_classifier": {"subj_classifier": subj.subj_classifier,
                       "cc_classifier": {}}
 MODEL_NETWORK = networks_choices[MODEL_TASK][MODEL_VERSION]
 
-loss_choices = {"binary_cross_entropy":torch.nn.BCEWithLogitsLoss()}
 
 dataset_id = {"subj_classifier": 1,
               }
@@ -63,8 +63,18 @@ def main():
         configs = run.config.as_dict()
         # checkpoint callback setting
         checkpoint_callback = ModelCheckpoint(dirpath=CHECKPOINT_SAVE_PATH, filename= run.name, save_top_k=1, monitor='Loss/Val', mode='min', enable_version_counter=False, save_last=False, save_weights_only=True)
+        # train with weights settings
+        majority_weight = configs.get("majority_class_weight", 1.0)
+        train_with_weights = configs.get("train_with_weights", False)
+        if train_with_weights and majority_weight != 1.0:
+            minority_weight = 1.0 + (1.0 - majority_weight)
+            pos_weight_value = minority_weight / majority_weight
+        else:
+            pos_weight_value = 1.0
+        pos_weight_tensor = torch.tensor(pos_weight_value, dtype=torch.float32)
+        loss_choices = {"binary_cross_entropy":torch.nn.BCEWithLogitsLoss(pos_weight=pos_weight_tensor) if TRAIN_WITH_WEIGHTS else torch.nn.BCEWithLogitsLoss()}
         # load data module
-        data_module = DataModule(datasets_root=EMBEDDINGS_PATH, batch_size= configs["batch_size"], dataset_id=dataset_id[MODEL_TASK], num_workers=6 )
+        data_module = DataModule(datasets_root=EMBEDDINGS_PATH, batch_size= configs["batch_size"], dataset_id=dataset_id[MODEL_TASK], num_workers=6, train_with_weights=TRAIN_WITH_WEIGHTS, majority_class_weight=0.5)
         model = BaseModel(model=MODEL_NETWORK, loss_function=loss_choices[configs["loss_function"]], batch_size=configs["batch_size"], learning_rate=configs["lr"], learning_rate_patience=LR_PATIENCE, dataset_id=dataset_id[MODEL_TASK])
         # train the model
         trainer = Trainer(

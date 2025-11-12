@@ -17,7 +17,7 @@ from typing import Any, List, Tuple, TypeVar, Optional, Dict
 
 
 class DataModule(LightningDataModule):
-    def __init__(self, *, datasets_root: str, batch_size: int , num_workers: int, dataset_id: int):
+    def __init__(self, *, datasets_root: str, dataset_id: int, batch_size: int = 1, num_workers: int = 6):
         super().__init__()
         self.datasets_root = datasets_root
         self.dataset_id = dataset_id
@@ -32,8 +32,8 @@ class DataModule(LightningDataModule):
         embedding_size = metadata['embedding_size']
         embeddings = FloatTensor(torch.from_file(os.path.join(datasets_root, f"embeddings_{stage}_{dataset_id}.bin"), shared = False, size= (total_sentences * embedding_size))).view(total_sentences, embedding_size)
         labels = FloatTensor(torch.from_file(os.path.join(datasets_root, f"labels_{stage}_{dataset_id}.bin"), shared = False, size= (total_sentences))).view(total_sentences)
-
         return TensorDataset(embeddings, labels)
+
 
     def setup(self, stage: str) -> None:
         if stage == "fit":
@@ -51,10 +51,10 @@ class DataModule(LightningDataModule):
         return DataLoader(self.val_subset, batch_size=self.batch_size, num_workers=self.num_workers, persistent_workers=True, shuffle=False, drop_last=True)
 
     def test_dataloader(self):
-        return DataLoader(self.test_subset,  batch_size=1, num_workers=self.num_workers, persistent_workers=True, shuffle=False, drop_last=True)
+        return DataLoader(self.test_subset,  batch_size=1, num_workers=self.num_workers, persistent_workers=True, shuffle=False, drop_last=False)
 
 class BaseModel(LightningModule):
-    def __init__(self, *, model: torch.nn.Module, batch_size: int, loss_function: torch.nn.Module, learning_rate: float, learning_rate_patience: int = None, dataset_id: int = None, **kwargs: Any):
+    def __init__(self, *, model: torch.nn.Module, batch_size: int = 1, loss_function: torch.nn.Module, learning_rate: float= 0.01, learning_rate_patience: int = None, dataset_id: int = None, **kwargs: Any):
         super().__init__(**kwargs)
 
         self.model = model()
@@ -90,9 +90,9 @@ class BaseModel(LightningModule):
         return self.model(x)
 
     #defines basics operations for train, validadion and test
-    def _any_step(self, batch: Tuple[torch.tensor, torch.tensor], stage: str):
+    def _any_step(self, batch: Tuple[torch.tensor, torch.tensor, torch.tensor], stage: str):
         X, y = batch[0].squeeze(), batch[1].squeeze()
-        predicted_value = self(X)    # o proprio objeto de BaseModel é o modelo (https://towardsdatascience.com/from-pytorch-to-pytorch-lightning-a-gentle-introduction-b371b7caaf09)
+        predicted_value = self(X)
         predicted_value = predicted_value.squeeze()
         # Compute and log the loss value.
         loss = self.criterion(predicted_value, y)
