@@ -116,8 +116,8 @@ class BaseModel(LightningModule):
 
     def configure_optimizers(self):
         optmizer = SGD(self.parameters(), lr = self.learning_rate)
-        scheduler = ReduceLROnPlateau(optmizer, mode='min', patience=self.learning_rate_patience)
-        return {"optimizer": optmizer, "lr_scheduler": {"scheduler": scheduler, "monitor": "Loss/Val"}}
+        scheduler = ReduceLROnPlateau(optmizer, mode='max', patience=self.learning_rate_patience)
+        return {"optimizer": optmizer, "lr_scheduler": {"scheduler": scheduler, "monitor": "recall/Val/Epoch"}}
 
     def forward(self, x: Any):
         return self.model(x)

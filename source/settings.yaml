@@ -1,14 +1,14 @@
 #training stage
-sweep_id: ""
-task:  "multitask_classifier" #subj_classifier
-subj_model: "subj_classifier_v1"
-multitask_model: "multitask_model_v1"
+task:  ""                    # subj_classifier / multitask_classifier
+subj_model: ""               # subj_classifier_v1, subj_classifier_v2, subj_classifier_v3 ...
+multitask_model: ""          # multitask_model_v1, multitask_model_v2, multitask_model_v3 ...
 max_epochs: 1000
 learning_rate_patience: 10
 train_subj_with_weights: true
 
+
 #evaluation stage
-subj_chosen_model: "laced-sweep-3996"
+subj_chosen_model: ""
 multitask_chosen_model: ""
-dataset_to_evaluate: 1
-dataset_stage: "validate"
+dataset_to_evaluate: None     # 1: subjt / 2: climate change
+dataset_stage: ""             # fit / validate / test

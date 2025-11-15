@@ -2,7 +2,7 @@ program: 3-sweep.py
 name: LLMs
 method: bayes
 metric:
-  name: acc/Val/Epoch
+  name: recall/Val/Epoch
   goal: maximize
 parameters:
   subj_loss_function:

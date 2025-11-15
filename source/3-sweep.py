@@ -39,7 +39,8 @@ with open(os.path.join(os.path.dirname(__file__),'sweep_config.yaml')) as file:
 
 # models choices
 networks_choices = {"subj_classifier": {"subj_classifier_v1": subj.subj_classifier_v1,
-                                        "subj_classifier_v2": subj.subj_classifier_v2},
+                                        "subj_classifier_v2": subj.subj_classifier_v2,
+                                        "subj_classifier_v2": subj.subj_classifier_v3},
                       "multitask_model": {"multitask_model_v1": classn.multitask_model_v1,
                                           "multitask_model_v2": classn.multitask_model_v2}}
 if TASK == "subj_classifier":
