@@ -27,14 +27,20 @@ dataset_2 = {
 #dataset_1 = {filename.strip('.tsv'): pd.read_csv(os.path.join(DATASET_1_PATH, filename), sep='\t', header=None) for filename in os.listdir(DATASET_1_PATH)}
 #dataset_2 = {filename.strip('.txt'): pd.read_csv(os.path.join(DATASET_2_PATH, filename), sep='\t', header=None) for filename in os.listdir(DATASET_2_PATH)}
 
-# splits datasets into train, val, test (train and val with holdout 0.8/0.2)
+# gets datasets
 train_dataset_1 = dataset_1["train_en"].loc[1:,1:2]
-train_dataset_1, val_dataset_1 = train_test_split(train_dataset_1, test_size=0.2, random_state=42, shuffle=True, stratify=train_dataset_1.loc[:, 2])
 test_dataset_1 = dataset_1["test_en_labeled"].loc[1:,0:1]
 
 train_dataset_2 = dataset_2["4C_training_CLEANED"]
-train_dataset_2, val_dataset_2 = train_test_split(train_dataset_2, test_size=0.2, random_state=42, shuffle=True, stratify=train_dataset_2.loc[:, 1])
 test_dataset_2 = dataset_2["4C_test_CLEANED"]
+
+# inserts a column "subjectivity" for multitask training
+train_dataset_2.insert(1, "subjectivity", None)
+test_dataset_2.insert(1, "subjectivity", None)
+
+# splits the train datasets into train, val with holdout 0.8/0.2
+train_dataset_1, val_dataset_1 = train_test_split(train_dataset_1, test_size=0.2, random_state=42, shuffle=True, stratify=train_dataset_1.loc[:, 2])
+train_dataset_2, val_dataset_2 = train_test_split(train_dataset_2, test_size=0.2, random_state=42, shuffle=True, stratify=train_dataset_2.loc[:, 1])
 
 # saves datasets
 os.makedirs(SAVE_PATH, exist_ok=True)
