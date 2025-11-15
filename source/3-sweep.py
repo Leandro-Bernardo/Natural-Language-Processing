@@ -23,7 +23,6 @@ torch.set_float32_matmul_precision('high')
 with open(os.path.join(os.path.dirname(__file__), "settings.yaml"), "r") as file:
     settings = yaml.load(file, Loader=yaml.FullLoader)
     # global variables
-    SWEEP_ID = settings["sweep_id"]
     TASK = settings["task"]
     SUBJ_MODEL_VERSION = settings["subj_model"]
     MULTITASK_MODEL_VERSION = settings["multitask_model"]
@@ -40,7 +39,7 @@ with open(os.path.join(os.path.dirname(__file__),'sweep_config.yaml')) as file:
 # models choices
 networks_choices = {"subj_classifier": {"subj_classifier_v1": subj.subj_classifier_v1,
                                         "subj_classifier_v2": subj.subj_classifier_v2,
-                                        "subj_classifier_v2": subj.subj_classifier_v3},
+                                        "subj_classifier_v3": subj.subj_classifier_v3},
                       "multitask_model": {"multitask_model_v1": classn.multitask_model_v1,
                                           "multitask_model_v2": classn.multitask_model_v2}}
 if TASK == "subj_classifier":
