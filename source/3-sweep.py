@@ -41,7 +41,8 @@ networks_choices = {"subj_classifier": {"subj_classifier_v1": subj.subj_classifi
                                         "subj_classifier_v2": subj.subj_classifier_v2,
                                         "subj_classifier_v3": subj.subj_classifier_v3},
                       "multitask_model": {"multitask_model_v1": classn.multitask_model_v1,
-                                          "multitask_model_v2": classn.multitask_model_v2}}
+                                          "multitask_model_v2": classn.multitask_model_v2,
+                                          "multitask_model_v3": classn.multitask_model_v3}}
 if TASK == "subj_classifier":
     SUBJ_MODEL_NETWORK = networks_choices[TASK][SUBJ_MODEL_VERSION]
 elif TASK == "multitask_classifier":
@@ -60,10 +61,27 @@ EMBEDDINGS_PATH = os.path.join(os.path.dirname(__file__), "..", "dataset", "embe
 # creates directories
 os.makedirs(CHECKPOINT_SAVE_PATH, exist_ok =True)
 
-
 dataset_id = {"subj_classifier": 1,
               "multitask_classifier": 2}
+# callbacks
 
+if TASK == "subj_classifier":
+    early_stopping_callback = [
+        EarlyStopping(monitor="acc/Val/Epoch", mode="max",patience=LR_PATIENCE),
+        EarlyStopping(monitor="recall/Val/Epoch", mode="max",patience=LR_PATIENCE),
+        EarlyStopping(monitor="Loss/Val", mode="min",patience=LR_PATIENCE),
+        ]
+# Para multitask_classifier
+elif TASK == "multitask_classifier":
+    early_stopping_callback = [
+        EarlyStopping(monitor="acc/subj/Val/Epoch",  mode="min", patience=LR_PATIENCE),
+        EarlyStopping(monitor="acc/cc/Val/Epoch",  mode="min", patience=LR_PATIENCE),
+        EarlyStopping(monitor="recall/subj/Val/Epoch",  mode="min", patience=LR_PATIENCE),
+        EarlyStopping(monitor="recall/cc/Val/Epoch",  mode="min", patience=LR_PATIENCE),
+        EarlyStopping(monitor="Loss_subj_model/Val",  mode="min", patience=LR_PATIENCE),
+        EarlyStopping(monitor="Loss_cc_model/Val",  mode="min", patience=LR_PATIENCE),
+        EarlyStopping(monitor="Total_Loss/Val",  mode="min", patience=LR_PATIENCE),
+        ]
 ### Main ###
 def main():
     # starts wandb
@@ -73,8 +91,6 @@ def main():
         logger = WandbLogger(project="LLMs", experiment=run)
         # gets sweep configs
         configs = run.config.as_dict()
-        # checkpoint callback setting
-        checkpoint_callback = ModelCheckpoint(dirpath=CHECKPOINT_SAVE_PATH, filename= run.name, save_top_k=1, monitor='Loss/Val', mode='min', enable_version_counter=False, save_last=False, save_weights_only=True)
         # train with weights settings
         subj_majority_weight = configs.get("subj_weight_value", 1.0)
         if TRAIN_SUBJ_WITH_WEIGHTS:
@@ -88,7 +104,13 @@ def main():
         # load data module
         data_module = DataModule(datasets_root=EMBEDDINGS_PATH, batch_size= configs["batch_size"], dataset_id=dataset_id[TASK], num_workers=6)
         if TASK == "subj_classifier":
-            model = BaseModel(model=SUBJ_MODEL_NETWORK, loss_function=loss_choices[configs["subj_loss_function"]], batch_size=configs["batch_size"], learning_rate=configs["lr"], learning_rate_patience=LR_PATIENCE, dataset_id=1)
+
+            model = BaseModel(model=SUBJ_MODEL_NETWORK, loss_function=loss_choices[configs["subj_loss_function"]], batch_size=configs["batch_size"],
+                              learning_rate=configs["lr"], learning_rate_patience=LR_PATIENCE, dataset_id=1)
+            # checkpoint callback setting
+            checkpoint_callback = ModelCheckpoint(dirpath=CHECKPOINT_SAVE_PATH, filename= run.name, save_top_k=1, monitor='Loss/Val', mode='min',
+                                                  enable_version_counter=False, save_last=False, save_weights_only=True)
+
         elif TASK == "multitask_classifier":
             with open(os.path.join(EMBEDDINGS_PATH, "metadata", "cc_classes.json"), "r") as file:
                 cc_classes_metadata = json.load(file)
@@ -100,6 +122,9 @@ def main():
             model = MultitaskModel(cc_model = lambda: MULTITASK_MODEL_NETWORK(num_classes=num_cc_classes), subj_trained_model = subj_trained_model,
                                 subj_loss = torch.nn.BCEWithLogitsLoss(pos_weight=pos_weight_tensor), cc_loss = torch.nn.CrossEntropyLoss(),
                                 batch_size=16, learning_rate=0.01, learning_rate_patience=LR_PATIENCE, dataset_id=2, num_cc_classes=num_cc_classes)
+            # checkpoint callback setting
+            checkpoint_callback = ModelCheckpoint(dirpath=CHECKPOINT_SAVE_PATH, filename= run.name, save_top_k=1, monitor='Total_Loss/Val', mode='min',
+                                                  enable_version_counter=False, save_last=False, save_weights_only=True)
         else:
             raise Exception(f"Invalid option for task.\nTasks: subj_classifier or multitask_classifier.\nChosen: {TASK}")
         # train the model
@@ -109,11 +134,7 @@ def main():
                         max_epochs=MAX_EPOCHS,
                         callbacks= [checkpoint_callback,
                                     LearningRateMonitor(logging_interval='epoch'),
-                                    EarlyStopping(
-                                                monitor="acc/Val/Epoch",
-                                                mode="max",
-                                                patience= LR_PATIENCE
-                                            ),],
+                                    *early_stopping_callback,],
                         gradient_clip_val= 0.5,
                         gradient_clip_algorithm="value",  # https://lightning.ai/docs/pytorch/stable/advanced/training_tricks.html#gradient-clipping
                         log_every_n_steps=1,
