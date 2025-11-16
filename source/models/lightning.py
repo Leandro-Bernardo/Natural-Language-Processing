@@ -231,25 +231,25 @@ class MultitaskModel(LightningModule):
         return subj_prediction, cc_prediction
 
     def L2_reg(self, model1_params: torch.nn, model2_params: torch.nn, weight_decay:float):
-        # 1. Crie um dicionário (nome -> parâmetro) para o modelo 2
-        #    para busca rápida.
-        params2 = dict(model2_params)
+        if not isinstance(model1_params, dict):
+            params1 = dict(model1_params)
+        else:
+            params1 = model1_params
+
+        if not isinstance(model2_params, dict):
+            params2 = dict(model2_params)
+        else:
+            params2 = model2_params
 
         l2_reg = 0.0
 
-        # 2. Itere sobre o modelo 1 (nome, parâmetro)
-        for name1, param1 in model1_params:
-
-            # 3. Verifique se o modelo 2 TAMBÉM TEM um parâmetro
-            #    com o MESMO NOME
+        for name1, param1 in params1.items():
+            # checks if second model has the same parameter
             if name1 in params2:
                 param2 = params2[name1]
-
-                # 4. VERIFIQUE SE AS FORMAS (SHAPES) SÃO IGUAIS!
-                #    Esta é a verificação que evita o seu erro.
+                # verify if shapes are equal
                 if param1.shape == param2.shape:
-
-                    # 5. Só se tudo bater, aplique a penalidade
+                    # applyes L2 penalization
                     l2_reg += torch.sum((param1 - param2) ** 2)
 
         return weight_decay * l2_reg
@@ -258,8 +258,14 @@ class MultitaskModel(LightningModule):
     def _any_step(self, batch: Tuple[torch.tensor, Tuple[torch.tensor, torch.tensor]], stage: str):
         X, (y1, y2) = batch
         subj_prediction, cc_prediction = self.subj_trained_model(X), self.cc_model(X)
+
+        if hasattr(self.subj_trained_model, 'model'):
+            subj_params = self.subj_trained_model.model.named_parameters()
+        else:
+            subj_params = self.subj_trained_model.named_parameters()
+        cc_params = self.cc_model.named_parameters()
         # computes L2 regularization for parameters of subj_model e cc_model
-        L2_regularization = self.L2_reg(self.subj_trained_model.named_parameters(), self.cc_model.named_parameters(), weight_decay=0.001)
+        L2_regularization = self.L2_reg(subj_params, cc_params, weight_decay=0.001)
         # Compute and log the loss value.
         loss1 = self.criterion1(subj_prediction.squeeze(), y1)
         loss2 = self.criterion2(cc_prediction, y2.long())
@@ -278,7 +284,7 @@ class MultitaskModel(LightningModule):
         cc_log   = {f"{metric}/cc/{stage}/Step": value for metric, value in cc_metrics.items()}
         self.log_dict(subj_log)
         self.log_dict(cc_log)
-        print(loss1, loss2, L2_regularization)
+        #print(loss1, loss2, L2_regularization)
         return loss
 
     def training_step(self, batch: List[torch.tensor]):

@@ -106,7 +106,7 @@ def main():
         if TASK == "subj_classifier":
 
             model = BaseModel(model=SUBJ_MODEL_NETWORK, loss_function=loss_choices[configs["subj_loss_function"]], batch_size=configs["batch_size"],
-                              learning_rate=configs["lr"], learning_rate_patience=LR_PATIENCE, dataset_id=1)
+                              learning_rate=configs["lr"], learning_rate_patience=LR_PATIENCE, dataset_id=1).train()
             # checkpoint callback setting
             checkpoint_callback = ModelCheckpoint(dirpath=CHECKPOINT_SAVE_PATH, filename= run.name, save_top_k=1, monitor='Loss/Val', mode='min',
                                                   enable_version_counter=False, save_last=False, save_weights_only=True)
@@ -118,10 +118,10 @@ def main():
             subj_trained_model = BaseModel.load_from_checkpoint(SUBJ_MODEL_CHECKPOINT,
                                                 model=SUBJ_MODEL_NETWORK,
                                                 loss_function=torch.nn.BCEWithLogitsLoss(),
-                                                strict=False).eval()
+                                                strict=False).train()
             model = MultitaskModel(cc_model = lambda: MULTITASK_MODEL_NETWORK(num_classes=num_cc_classes), subj_trained_model = subj_trained_model,
                                 subj_loss = torch.nn.BCEWithLogitsLoss(pos_weight=pos_weight_tensor), cc_loss = torch.nn.CrossEntropyLoss(),
-                                batch_size=16, learning_rate=0.01, learning_rate_patience=LR_PATIENCE, dataset_id=2, num_cc_classes=num_cc_classes)
+                                batch_size=16, learning_rate=0.01, learning_rate_patience=LR_PATIENCE, dataset_id=2, num_cc_classes=num_cc_classes).train()
             # checkpoint callback setting
             checkpoint_callback = ModelCheckpoint(dirpath=CHECKPOINT_SAVE_PATH, filename= run.name, save_top_k=1, monitor='Total_Loss/Val', mode='min',
                                                   enable_version_counter=False, save_last=False, save_weights_only=True)

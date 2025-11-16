@@ -67,12 +67,11 @@ class multitask_model_v3(nn.Module):
     def __init__(self, num_classes, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.num_classes = num_classes
-        self.input_layer = nn.Sequential(
+        self.body = nn.Sequential(
                                 nn.Linear(in_features=384, out_features=128),
                                 nn.BatchNorm1d(128),
                                 nn.ReLU(),
-                                nn.Dropout(0.2))
-        self.layer_1 = nn.Sequential(
+                                nn.Dropout(0.2),
                                 nn.Linear(in_features=128, out_features=32),
                                 nn.BatchNorm1d(32),
                                 nn.ReLU(),
@@ -83,7 +82,6 @@ class multitask_model_v3(nn.Module):
         )
 
     def forward(self, x: torch.Tensor):
-        x = self.input_layer(x)
-        x = self.layer_1(x)
+        x = self.body(x)
         x = self.classifier_layer(x)
         return x
