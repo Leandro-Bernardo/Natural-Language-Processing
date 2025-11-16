@@ -1,14 +1,15 @@
 #training stage
-task:  ""                    # subj_classifier / multitask_classifier
-subj_model: ""               # subj_classifier_v1, subj_classifier_v2, subj_classifier_v3 ...
-multitask_model: ""          # multitask_model_v1, multitask_model_v2, multitask_model_v3 ...
+task:  "multitask_classifier"                    # subj_classifier / multitask_classifier
+subj_model: "subj_classifier_v3"  # subj_classifier_v1, subj_classifier_v2, subj_classifier_v3 ...
+multitask_model: "multitask_model_v3"          # multitask_model_v1, multitask_model_v2, multitask_model_v3 ...
 max_epochs: 1000
 learning_rate_patience: 10
 train_subj_with_weights: true
+train_cc_with_weights: false
 
 
 #evaluation stage
-subj_chosen_model: ""
+subj_chosen_model: "wobbly-sweep-587"
 multitask_chosen_model: ""
-dataset_to_evaluate: None     # 1: subjt / 2: climate change
-dataset_stage: ""             # fit / validate / test
+dataset_to_evaluate: 1        # 1: subjt / 2: climate change
+dataset_stage: "test"             # fit / validate / test
