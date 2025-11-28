@@ -6,12 +6,13 @@ subj_model: ""              # subj_classifier_v1, subj_classifier_v2, subj_class
 multitask_model: ""         # multitask_model_v1, multitask_model_v2, multitask_model_v3 ...
 max_epochs: 1000
 learning_rate_patience: 10
-train_subj_with_weights: true
+train_subj_with_weights: false
+finetune_subj_with_weights: false
 train_cc_with_weights: false
 
 
 #evaluation stage
 subj_chosen_model: ""
 multitask_chosen_model: ""
-dataset_to_evaluate: 1            # 1: subjt / 2: climate change
+dataset_to_evaluate: 2            # 1: subjt / 2: climate change (with labels)
 dataset_stage: "test"             # fit / validate / test

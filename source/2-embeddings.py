@@ -7,6 +7,8 @@ from sentence_transformers import SentenceTransformer
 from torch import FloatTensor, UntypedStorage
 from tqdm import tqdm
 from typing import Optional
+from numpy import unique
+from sklearn.utils.class_weight import compute_class_weight
 
 
 with open(os.path.join(os.path.dirname(__file__), "settings.yaml"), "r") as file:
@@ -42,10 +44,13 @@ elif TASK == "multitask_classifier":
     unique_test_labels = test_dataset['label'].unique()
     assert (len(unique_val_labels) == len(unique_train_labels)) & (len(unique_test_labels) == len(unique_train_labels)) & (len(unique_test_labels) == len(unique_val_labels)), "some class(es) are not present in all train/val/test dataset"
     label_mapper = {label: idx for idx, label in enumerate(unique_train_labels)}
+    classes = unique(train_dataset['label'])
+    class_weights = compute_class_weight(class_weight='balanced',classes=classes, y=train_dataset['label']).tolist()
     with open(os.path.join(os.path.join(EMBEDDINGS_SAVE_PATH, "metadata"), f"cc_classes.json"), "w") as file:
         json.dump({
             "total_classes": len(label_mapper.keys()),
             "mapper": label_mapper,
+            "class_weights": class_weights,
         }, file)
     dataset_id = 2
 

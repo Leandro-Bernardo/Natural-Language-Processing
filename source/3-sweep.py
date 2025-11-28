@@ -7,10 +7,12 @@ from wandb.wandb_run import Run
 from models import subj, classn
 from models.lightning import DataModule, BaseModel, MultitaskModel
 
+from sklearn.utils.class_weight import compute_class_weight
 from pytorch_lightning import Trainer
 from pytorch_lightning.loggers import WandbLogger
 from pytorch_lightning.callbacks import ModelCheckpoint, LearningRateMonitor
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
+
 
 os.environ["WANDB_CONSOLE"] = "off"  # Needed to avoid "ValueError: signal only works in main thread of the main interpreter".
 
@@ -30,6 +32,8 @@ with open(os.path.join(os.path.dirname(__file__), "settings.yaml"), "r") as file
     MAX_EPOCHS = settings["max_epochs"]
     LR_PATIENCE = settings["learning_rate_patience"]
     TRAIN_SUBJ_WITH_WEIGHTS = settings["train_subj_with_weights"]
+    FINETUNE_SUBJ_WITH_WEIGHTS = settings["finetune_subj_with_weights"]
+    TRAIN_CC_WITH_WEIGHTS = settings["train_cc_with_weights"]
 
 
 # reads sweep configs yaml
@@ -82,6 +86,11 @@ elif TASK == "multitask_classifier":
         EarlyStopping(monitor="Loss_cc_model/Val",  mode="min", patience=LR_PATIENCE),
         EarlyStopping(monitor="Total_Loss/Val",  mode="min", patience=LR_PATIENCE),
         ]
+
+if TASK == "multitask_classifier":
+    with open(os.path.join(EMBEDDINGS_PATH, "metadata", "cc_classes.json"), "r") as file:
+        cc_classes_metadata = json.load(file)
+
 ### Main ###
 def main():
     # starts wandb
@@ -91,36 +100,37 @@ def main():
         logger = WandbLogger(project="LLMs", experiment=run)
         # gets sweep configs
         configs = run.config.as_dict()
-        # train with weights settings
+        # train/finetune subj with weights settings
         subj_majority_weight = configs.get("subj_weight_value", 1.0)
-        if TRAIN_SUBJ_WITH_WEIGHTS:
+        if (TRAIN_SUBJ_WITH_WEIGHTS | FINETUNE_SUBJ_WITH_WEIGHTS):
             subj_minority_weight = 1.0 + (1.0 - subj_majority_weight)
             pos_weight_value =  subj_majority_weight / subj_minority_weight
         else:
             pos_weight_value = 1.0
         pos_weight_tensor = torch.tensor(pos_weight_value, dtype=torch.float32)
-        loss_choices = {"binary_cross_entropy":torch.nn.BCEWithLogitsLoss(pos_weight=pos_weight_tensor) if TRAIN_SUBJ_WITH_WEIGHTS else torch.nn.BCEWithLogitsLoss(),
-                        "categorical_cross_entropy": torch.nn.CrossEntropyLoss()}
+        #train cc with weights settings
+        if TRAIN_SUBJ_WITH_WEIGHTS:
+            cc_class_weights = cc_classes_metadata["class_weights"]
+        loss_choices = {"binary_cross_entropy":torch.nn.BCEWithLogitsLoss(pos_weight=pos_weight_tensor),
+                        "categorical_cross_entropy": torch.nn.CrossEntropyLoss(weight=cc_class_weights) if TRAIN_CC_WITH_WEIGHTS else torch.nn.CrossEntropyLoss()}
         # load data module
         data_module = DataModule(datasets_root=EMBEDDINGS_PATH, batch_size= configs["batch_size"], dataset_id=dataset_id[TASK], num_workers=6)
         if TASK == "subj_classifier":
 
-            model = BaseModel(model=SUBJ_MODEL_NETWORK, loss_function=loss_choices[configs["subj_loss_function"]], batch_size=configs["batch_size"],
+            model = BaseModel(model=SUBJ_MODEL_NETWORK, loss_function=loss_choices["binary_cross_entropy"], batch_size=configs["batch_size"],
                               learning_rate=configs["lr"], learning_rate_patience=LR_PATIENCE, dataset_id=1).train()
             # checkpoint callback setting
             checkpoint_callback = ModelCheckpoint(dirpath=CHECKPOINT_SAVE_PATH, filename= run.name, save_top_k=1, monitor='Loss/Val', mode='min',
                                                   enable_version_counter=False, save_last=False, save_weights_only=True)
 
         elif TASK == "multitask_classifier":
-            with open(os.path.join(EMBEDDINGS_PATH, "metadata", "cc_classes.json"), "r") as file:
-                cc_classes_metadata = json.load(file)
             num_cc_classes = cc_classes_metadata["total_classes"]
             subj_trained_model = BaseModel.load_from_checkpoint(SUBJ_MODEL_CHECKPOINT,
                                                 model=SUBJ_MODEL_NETWORK,
-                                                loss_function=torch.nn.BCEWithLogitsLoss(),
+                                                loss_function=loss_choices["binary_cross_entropy"],
                                                 strict=False).train()
             model = MultitaskModel(cc_model = lambda: MULTITASK_MODEL_NETWORK(num_classes=num_cc_classes), subj_trained_model = subj_trained_model,
-                                subj_loss = torch.nn.BCEWithLogitsLoss(pos_weight=pos_weight_tensor), cc_loss = torch.nn.CrossEntropyLoss(),
+                                subj_loss = loss_choices["binary_cross_entropy"], cc_loss = loss_choices["categorical_cross_entropy"],
                                 batch_size=16, learning_rate=0.01, learning_rate_patience=LR_PATIENCE, dataset_id=2, num_cc_classes=num_cc_classes).train()
             # checkpoint callback setting
             checkpoint_callback = ModelCheckpoint(dirpath=CHECKPOINT_SAVE_PATH, filename= run.name, save_top_k=1, monitor='Total_Loss/Val', mode='min',
