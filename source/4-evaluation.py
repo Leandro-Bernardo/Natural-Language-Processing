@@ -54,7 +54,7 @@ elif TASK == "multitask_classifier":
 
 def main():
     if TASK == "subj_classifier":
-        RESULTS_DIR = os.path.join(os.path.dirname(__file__), "..", "results", "subj")
+        RESULTS_DIR = os.path.join(os.path.dirname(__file__), "..", "results", "subj", f"{CHOSEN_SUBJ_MODEL}")
         os.makedirs(RESULTS_DIR, exist_ok=True)
 
         datamodule = DataModule(datasets_root=DATASET_PATH, dataset_id=DATASET, batch_size=1)
@@ -115,7 +115,7 @@ def main():
         plt.title(f'Confusion Matrix - Dataset {DATASET_NAME} (stage: {STAGES_MAPPING[DATASET_STAGE]})')
         plt.tight_layout()
 
-        plt.savefig(os.path.join(RESULTS_DIR, f'confusion_matrix_{DATASET_NAME}_stage({STAGES_MAPPING[DATASET_STAGE]})_model({CHOSEN_SUBJ_MODEL})_{TRAIN_WITH_WEIGHTS}.png'), dpi=300)
+        plt.savefig(os.path.join(RESULTS_DIR, f'confusion_matrix_{DATASET_NAME}_stage({STAGES_MAPPING[DATASET_STAGE]})_{TRAIN_WITH_WEIGHTS}.png'), dpi=300)
 
         metrics_dict = {
             'dataset': DATASET,
@@ -128,12 +128,12 @@ def main():
         }
 
         metrics_df = pd.DataFrame([metrics_dict])
-        metrics_file = os.path.join(RESULTS_DIR, f'metrics({DATASET_NAME})_stage({STAGES_MAPPING[DATASET_STAGE]})_model({CHOSEN_SUBJ_MODEL})_{TRAIN_WITH_WEIGHTS}.csv')
+        metrics_file = os.path.join(RESULTS_DIR, f'metrics({DATASET_NAME})_stage({STAGES_MAPPING[DATASET_STAGE]})_{TRAIN_WITH_WEIGHTS}.csv')
         metrics_df.to_csv(metrics_file, index=False)
 
     elif TASK == "multitask_classifier":
         NUM_CLASSES = 18
-        RESULTS_DIR = os.path.join(os.path.dirname(__file__), "..", "results", "multitask")
+        RESULTS_DIR = os.path.join(os.path.dirname(__file__), "..", "results", "multitask", f"{CHOSEN_MULTITASK_MODEL}")
         os.makedirs(RESULTS_DIR, exist_ok=True)
 
         datamodule = DataModule(datasets_root=DATASET_PATH, dataset_id=DATASET, batch_size=1)
@@ -204,25 +204,11 @@ def main():
         cc_rec = cc_recall(cc_pred_labels, cc_true_labels)
         cc_f1_score = cc_f1(cc_pred_labels, cc_true_labels)
 
-        # print(f"\n{'='*60}")
-        # print(f"Overall Metrics - {DATASET_NAME} ({STAGES_MAPPING[DATASET_STAGE]})")
-        # print(f"{'='*60}")
-        # print(f"Accuracy:  {acc:.4f}")
-        # print(f"Precision: {prec:.4f} (macro)")
-        # print(f"Recall:    {rec:.4f} (macro)")
-        # print(f"F1-Score:  {f1_score:.4f} (macro)")
-        # print(f"{'='*60}\n")
-
-        # print("\nDetailed Classification Report:")
-        # print(classification_report(true_labels.numpy(), pred_labels.numpy(),
-        #                            target_names=[f'Class {i}' for i in range(NUM_CLASSES)],
-        #                            digits=4))
-
         subj_cm = confusion_matrix(subj_true_labels.numpy(), subj_pred_labels.numpy())
         cc_cm = confusion_matrix(cc_true_labels.numpy(), cc_pred_labels.numpy())
 
         #subj matrix
-        plt.figure(figsize=(16, 14))
+        plt.figure(figsize=(18, 14))
         sns.heatmap(subj_cm, annot=True, fmt='d', cmap='Blues',
                    xticklabels=['Class OBJ', 'Class SUBJ'],
                    yticklabels=['Class OBJ', 'Class SUBJ'],
@@ -231,7 +217,7 @@ def main():
         plt.xlabel('Predicted Label', fontsize=12)
 
         metrics_text = f'Accuracy:  {subj_acc:.4f}\nPrecision: {subj_prec:.4f}\nRecall:    {subj_rec:.4f}\nF1-Score:  {subj_f1_score:.4f}'
-        plt.text(1.02, 0.5, metrics_text,
+        plt.text(1.22, 0.5, metrics_text,
                 transform=plt.gca().transAxes,
                 fontsize=11,
                 verticalalignment='center',
@@ -239,9 +225,9 @@ def main():
 
         plt.title(f'Confusion Matrix - Dataset {DATASET_NAME} (subj) (stage: {STAGES_MAPPING[DATASET_STAGE]})\nMulticlass Classification (2 classes)',
                  fontsize=14, pad=20)
-        plt.tight_layout()
+        plt.tight_layout(rect=[0, 0, 0.99, 1])
 
-        plt.savefig(os.path.join(RESULTS_DIR, f'confusion_matrix_{DATASET_NAME}(subj)_stage({STAGES_MAPPING[DATASET_STAGE]})_model({CHOSEN_MULTITASK_MODEL})_{TRAIN_WITH_WEIGHTS}_multiclass.png'), dpi=300)
+        plt.savefig(os.path.join(RESULTS_DIR, f'confusion_matrix_{DATASET_NAME}(subj)_stage({STAGES_MAPPING[DATASET_STAGE]})_{TRAIN_WITH_WEIGHTS}_multiclass.png'), dpi=300)
 
         # cc matrix
         plt.figure(figsize=(16, 14))
@@ -253,7 +239,7 @@ def main():
         plt.xlabel('Predicted Label', fontsize=12)
 
         metrics_text = f'Accuracy:  {cc_acc:.4f}\nPrecision: {cc_prec:.4f}\nRecall:    {cc_rec:.4f}\nF1-Score:  {cc_f1_score:.4f}'
-        plt.text(1.02, 0.5, metrics_text,
+        plt.text(1.22, 0.5, metrics_text,
                 transform=plt.gca().transAxes,
                 fontsize=11,
                 verticalalignment='center',
@@ -261,9 +247,9 @@ def main():
 
         plt.title(f'Confusion Matrix - Dataset {DATASET_NAME}(cc) (stage: {STAGES_MAPPING[DATASET_STAGE]})\nMulticlass Classification ({NUM_CLASSES} classes)',
                  fontsize=14, pad=20)
-        plt.tight_layout()
+        plt.tight_layout(rect=[0, 0, 0.99, 1])
 
-        plt.savefig(os.path.join(RESULTS_DIR, f'confusion_matrix_{DATASET_NAME}(cc)_stage({STAGES_MAPPING[DATASET_STAGE]})_model({CHOSEN_MULTITASK_MODEL})_{TRAIN_WITH_WEIGHTS}_multiclass.png'), dpi=300)
+        plt.savefig(os.path.join(RESULTS_DIR, f'confusion_matrix_{DATASET_NAME}(cc)_stage({STAGES_MAPPING[DATASET_STAGE]})_{TRAIN_WITH_WEIGHTS}_multiclass.png'), dpi=300)
 
         # subj metrics
         metrics_dict = {
@@ -277,7 +263,7 @@ def main():
         }
 
         metrics_df = pd.DataFrame([metrics_dict])
-        metrics_file = os.path.join(RESULTS_DIR, f'metrics({DATASET_NAME})(subj)_stage({STAGES_MAPPING[DATASET_STAGE]})_model({CHOSEN_SUBJ_MODEL})_{TRAIN_WITH_WEIGHTS}.csv')
+        metrics_file = os.path.join(RESULTS_DIR, f'metrics({DATASET_NAME})(subj)_stage({STAGES_MAPPING[DATASET_STAGE]})_{TRAIN_WITH_WEIGHTS}.csv')
         metrics_df.to_csv(metrics_file, index=False)
 
         # cc metrics
@@ -306,7 +292,7 @@ def main():
             metrics_dict[f'f1_score_class_{i}'] = f1_per_class[i].item()
 
         metrics_df = pd.DataFrame([metrics_dict])
-        metrics_file = os.path.join(RESULTS_DIR, f'metrics({DATASET_NAME})(cc)_stage({STAGES_MAPPING[DATASET_STAGE]})_model({CHOSEN_MULTITASK_MODEL})_{TRAIN_WITH_WEIGHTS}_multiclass.csv')
+        metrics_file = os.path.join(RESULTS_DIR, f'metrics({DATASET_NAME})(cc)_stage({STAGES_MAPPING[DATASET_STAGE]})_{TRAIN_WITH_WEIGHTS}_multiclass.csv')
         metrics_df.to_csv(metrics_file, index=False)
 
     else:
