@@ -110,7 +110,7 @@ def main():
         pos_weight_tensor = torch.tensor(pos_weight_value, dtype=torch.float32)
         #train cc with weights settings
         if TRAIN_SUBJ_WITH_WEIGHTS:
-            cc_class_weights = cc_classes_metadata["class_weights"]
+            cc_class_weights = torch.tensor(cc_classes_metadata["class_weights"])
         loss_choices = {"binary_cross_entropy":torch.nn.BCEWithLogitsLoss(pos_weight=pos_weight_tensor),
                         "categorical_cross_entropy": torch.nn.CrossEntropyLoss(weight=cc_class_weights) if TRAIN_CC_WITH_WEIGHTS else torch.nn.CrossEntropyLoss()}
         # load data module
