@@ -241,7 +241,7 @@ class MultitaskModel(LightningModule):
         else:
             params2 = model2_params
 
-        l2_reg = 0.0
+        l2_reg = 1
 
         for name1, param1 in params1.items():
             # checks if second model has the same parameter

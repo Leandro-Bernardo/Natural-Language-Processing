@@ -144,6 +144,23 @@ def main():
         #trains the model
         trainer.fit(model=model, datamodule=data_module)#, train_dataloaders=dataset
         #saves model`s checkpoint on wandb
+            #subj model
+        subj_save_path = os.path.join(CHECKPOINT_SAVE_PATH, f"{run.name}_subj_updated.ckpt")
+        trainer.save_checkpoint(subj_save_path, weights_only=True)
+        wandb.save(subj_save_path)
+
+            #cc model
+        cc_save_path = os.path.join(CHECKPOINT_SAVE_PATH, f"{run.name}_cc_only.ckpt")
+        torch.save({
+            'model_state_dict': model.cc_model.state_dict(),
+            'hyperparameters': {
+                'num_cc_classes': num_cc_classes,
+                'learning_rate': configs["lr"],
+            }
+        }, cc_save_path)
+        wandb.save(cc_save_path)
+
+            #multitask model
         wandb.save(os.path.join(CHECKPOINT_SAVE_PATH, f"{run.name}.ckpt"))
         #saves settings used for that model
         wandb.save(os.path.join(".", "settings.yaml"))
